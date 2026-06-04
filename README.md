@@ -1,49 +1,63 @@
-# NPOC Operations Hub V1.0
+# NPOC Operations Hub V1.0 — Rebuilt
 
-A HOTR/Rock Foundation School operations prototype built with HTML, vanilla CSS, and vanilla JavaScript.
+A presentation-ready static front-end for Rock Foundation School / NPOC operations, designed to connect to Google Sheets through Google Apps Script.
 
-## V1.0 improvements
+## What is implemented
 
-- Church-office Excel import now detects the real call-list sheet instead of reading the Summary sheet.
-- Supports columns such as Name, Local Mobile Number, Foreign Mobile Number, Email, Home Address, Residence/Location, Gender, Prayer Request, and “Would you like to join House on the Rock?”.
-- Clean login splash screen styled around NPOC/HOTR.
-- Logout button added.
-- Admin session history added: login time, logout time, duration.
-- Activity/audit log added: imports, call status changes, notes, admin changes, backend syncs.
-- Footer simplified to: Rock Foundation School · NPOC Operations Hub.
-- Removed unnecessary “saved locally” text from the UI.
-- Mobile/desktop responsive refinements and reduced chart height.
-- Backend Apps Script security improved with optional API key, allowed users, locking, and audit trail.
+- HOTR logo included locally in `assets/hotr-logo.png` and embedded fallback inside `index.html` so GitHub Pages image paths do not break.
+- Role-based login simulation: Super Admin, Lead Admin, Assistant Lead Admin, Class Admin, Ordinary Admin.
+- Church call-list Excel/CSV upload with smart column detection.
+- Phone cleaning into `234...` format.
+- Automatic call distribution across active admins.
+- Admin-specific calling list and status updates.
+- QR attendance workflow using cleaned phone number or QR payload.
+- Module 1 / Module 2 attendance records.
+- Physical / Online attendance mode.
+- Student progress engine: yet to take Module 1, yet to take Module 2, eligible for graduation, graduated.
+- Graduation marking.
+- Admin Sunday attendance: physical / online.
+- Monthly report dashboard and chart widgets.
+- Audit log and login/logout session history.
+- Editable admin list.
+- Google Apps Script backend contract in `/backend/Code.gs`.
+- Clean footer: `Rock Foundation School · NPOC Operations Hub`.
 
-## Deployment
+## GitHub Pages deployment
 
-### GitHub Pages
 1. Create a GitHub repository.
-2. Upload all files in this folder.
-3. Go to Settings → Pages.
-4. Set source to main branch and root folder.
-5. Open the GitHub Pages URL.
+2. Upload all files in this folder, not the folder itself.
+3. Confirm these files exist at repository root:
+   - `index.html`
+   - `styles.css`
+   - `app.js`
+   - `assets/hotr-logo.png`
+4. Go to Repository Settings → Pages.
+5. Source: Deploy from branch.
+6. Branch: `main`, folder: `/root`.
+7. Wait for GitHub Pages URL.
 
-### Netlify
-1. Go to Netlify.
-2. Drag and drop this folder or ZIP.
-3. Netlify will deploy it as a static site.
+## Logo fix
 
-## Google Apps Script backend
+The app uses:
+
+```html
+<img src="./assets/hotr-logo.png" onerror="this.src=window.HOTR_LOGO_DATA">
+```
+
+This means the logo should show even if GitHub path resolution fails. Keep the `assets` folder in the repository.
+
+## Backend setup
 
 1. Open your Google Sheet.
 2. Go to Extensions → Apps Script.
-3. Paste the contents of `backend/Code.gs`.
-4. Deploy as Web App.
-5. Copy the Web App URL.
-6. Paste it into the app under Settings → Apps Script Web App URL.
+3. Paste `/backend/Code.gs`.
+4. Set Script Property:
+   - Key: `NPOC_API_KEY`
+   - Value: any secure random key.
+5. Deploy as Web App.
+6. Copy Web App URL into the app Settings screen.
+7. Paste the same API key into the app Settings screen.
 
-## Recommended security setup
+## Production note
 
-In Apps Script:
-
-1. Go to Project Settings → Script Properties.
-2. Add `NPOC_API_KEY` with a private random value.
-3. Optional: add `NPOC_ALLOWED_USERS` as comma-separated admin names.
-
-For full production security, connect Google Sign-In/OAuth and enforce role permissions on the backend.
+The front-end login is a demo login. For real production, login and permission checks must be enforced by Apps Script using the `Users` sheet and Google account email.
