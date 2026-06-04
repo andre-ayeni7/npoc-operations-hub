@@ -47,6 +47,7 @@
         <button data-page="myCalls">My Calling List</button>
         <button data-page="qrAttendance">QR Attendance</button>
         <button data-page="students">Student Progress</button>
+        <button data-page="adminTasks">Admin Tasks & Evaluation</button>
         <button data-page="adminAttendance">Admin Attendance</button>
         <button data-page="reports">Monthly Report</button>
         <button data-page="adminCenter">Admin Center</button>
@@ -100,6 +101,44 @@
           <div class="page-intro"><h3>Student progress & graduation engine</h3><p>The system identifies who has not taken Module 1, who has taken Module 1 but not Module 2, and who is eligible for graduation.</p></div>
           <div class="grid three" id="progressCards"></div>
           <div class="card"><div class="toolbar"><label>Student filter<select id="studentFilter"><option>All</option><option>Yet to take Module 1</option><option>Yet to take Module 2</option><option>Eligible for Graduation</option><option>Graduated</option></select></label><button class="btn btn-primary" id="markGraduatedBtn">Mark eligible as graduated</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Module 1</th><th>Module 2</th><th>Status</th><th>First Attendance</th><th>Last Attendance</th></tr></thead><tbody id="studentBody"></tbody></table></div></div>
+        </section>
+
+
+        <section class="page" id="adminTasks">
+          <div class="page-intro"><h3>Admin task schedule & evaluation</h3><p>Assign weekly class duties, track completion, capture proof, score performance and feed the admin evaluation dashboard. This mirrors the Admin Schedule & Evaluation workbook inside the application.</p></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="card-head"><h3>Create / update task</h3><span>Sunday operations</span></div>
+              <form id="taskForm" class="form-grid">
+                <input type="hidden" id="taskEditId" />
+                <label>Task title<input id="taskTitle" placeholder="e.g. Student Attendance" required /></label>
+                <label>Assigned admin<select id="taskAdmin"></select></label>
+                <label>Task category<select id="taskCategory"><option>Class Moderation</option><option>Student Registration</option><option>Student Attendance</option><option>Admin Attendance</option><option>Physical Supervision</option><option>Online Supervision</option><option>First Timers Reception</option><option>Call List Update</option><option>Faculty Confirmation</option><option>Bulk SMS</option><option>Student Follow-up</option><option>Report</option></select></label>
+                <label>Priority<select id="taskPriority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
+                <label>Due date<input id="taskDue" type="date" required /></label>
+                <label>Status<select id="taskStatus"><option>Pending</option><option>In Progress</option><option>Completed</option><option>Late</option><option>Reassigned</option><option>Missed</option></select></label>
+                <label>Proof / link<input id="taskProof" placeholder="Form link, photo folder, report link" /></label>
+                <label>Evaluation score<select id="taskScore"><option value="">Not scored</option><option>10</option><option>8</option><option>5</option><option>3</option><option>0</option></select></label>
+                <label class="span-2">Task description<textarea id="taskDescription" placeholder="What exactly should the admin do?"></textarea></label>
+                <button class="btn btn-primary" type="submit">Save task</button>
+                <button class="btn btn-soft" type="button" id="resetTaskBtn">Reset form</button>
+              </form>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h3>Admin task scorecard</h3><span>Completion and quality</span></div>
+              <canvas id="taskScoreChart"></canvas>
+              <div class="mini-kpis" id="taskMiniKpis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="toolbar">
+              <label>Admin filter<select id="taskAdminFilter"><option>All</option></select></label>
+              <label>Status filter<select id="taskStatusFilter"><option>All</option><option>Pending</option><option>In Progress</option><option>Completed</option><option>Late</option><option>Reassigned</option><option>Missed</option></select></label>
+              <button class="btn btn-soft" id="autoAssignTasksBtn">Auto-balance tasks</button>
+            </div>
+            <div class="mobile-card-list" id="taskMobileCards"></div>
+            <div class="table-wrap"><table><thead><tr><th>Task</th><th>Admin</th><th>Category</th><th>Due</th><th>Priority</th><th>Status</th><th>Score</th><th>Proof</th><th>Action</th></tr></thead><tbody id="taskBody"></tbody></table></div>
+          </div>
         </section>
 
         <section class="page" id="adminAttendance">

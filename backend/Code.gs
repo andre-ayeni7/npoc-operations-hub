@@ -80,3 +80,10 @@ function isAllowedUser_(email){
   return values.some(r => String(r[0]).toLowerCase() === String(email).toLowerCase() && String(r[3]).toLowerCase() !== 'no');
 }
 function json_(obj){ return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+
+
+/** V1.0.2 task schedule contract
+ * Expected sheet: Tasks
+ * Columns: id, title, description, admin, category, priority, due, status, proof, score, updatedAt, updatedBy
+ * All task updates should call appendAudit_(userEmail, 'SAVE_TASK', JSON.stringify(payload)).
+ */
