@@ -6,7 +6,7 @@
  */
 const SHEETS = {
   USERS: 'Users', CALLS: 'Call_List', ATTENDANCE: 'Student_Attendance', ADMIN_ATT: 'Admin_Attendance',
-  GRADUATES: 'Graduates', AUDIT: 'Audit_Log', SETTINGS: 'Settings'
+  GRADUATES: 'Graduates', FACULTY: 'Faculty_Schedule', EMAIL_QUEUE: 'Email_Queue', AUDIT: 'Audit_Log', SETTINGS: 'Settings'
 };
 function doPost(e){
   const lock = LockService.getScriptLock(); lock.waitLock(30000);
@@ -21,6 +21,8 @@ function doPost(e){
     if(action === 'appendAttendance') return json_({ok:true, data: appendRows_(SHEETS.ATTENDANCE, payload.rows || [], user, 'APPEND_STUDENT_ATTENDANCE')});
     if(action === 'appendAdminAttendance') return json_({ok:true, data: appendRows_(SHEETS.ADMIN_ATT, payload.rows || [], user, 'APPEND_ADMIN_ATTENDANCE')});
     if(action === 'appendCalls') return json_({ok:true, data: appendRows_(SHEETS.CALLS, payload.rows || [], user, 'APPEND_CALLS')});
+    if(action === 'sendQueuedEmails') return json_({ok:true, data: sendQueuedEmails_(payload.emails || [], user)});
+    if(action === 'saveFacultySchedule') return json_({ok:true, data: replaceData_(SHEETS.FACULTY, ['uid','date','module','faculty','status','notes'], payload.rows || [])});
     return json_({ok:false, error:'Unknown action'});
   } catch(err){ return json_({ok:false,error:String(err.message || err)}); }
   finally{ lock.releaseLock(); }
@@ -35,6 +37,8 @@ function syncAll_(payload, user){
   if(payload.attendance) replaceData_(SHEETS.ATTENDANCE, ['id','phone','name','date','module','mode','registered','first','createdAt','by'], payload.attendance);
   if(payload.adminAttendance) replaceData_(SHEETS.ADMIN_ATT, ['id','admin','mode','date','duty','by','time'], payload.adminAttendance);
   if(payload.graduates) replaceData_(SHEETS.GRADUATES, ['phone','name','date','by'], payload.graduates);
+  if(payload.facultySchedule) replaceData_(SHEETS.FACULTY, ['uid','date','module','faculty','status','notes'], payload.facultySchedule);
+  if(payload.emailQueue) replaceData_(SHEETS.EMAIL_QUEUE, ['id','type','name','phone','email','subject','body','status','queuedAt','sentAt','by'], payload.emailQueue);
   audit_(user, 'SYNC_ALL', 'Front-end state synced to backend');
   return {syncedAt:new Date()};
 }
@@ -46,6 +50,8 @@ function setupSheets_(){
     [SHEETS.ATTENDANCE]: ['id','phone','name','date','module','mode','registered','first','createdAt','by'],
     [SHEETS.ADMIN_ATT]: ['id','admin','mode','date','duty','by','time'],
     [SHEETS.GRADUATES]: ['phone','name','date','by'],
+    [SHEETS.FACULTY]: ['uid','date','module','faculty','status','notes'],
+    [SHEETS.EMAIL_QUEUE]: ['id','type','name','phone','email','subject','body','status','queuedAt','sentAt','by'],
     [SHEETS.AUDIT]: ['Timestamp','User','Action','Details'],
     [SHEETS.SETTINGS]: ['Key','Value']
   };
@@ -65,6 +71,19 @@ function appendRows_(sheetName, rows, user, action){
   if(rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,rows[0].length).setValues(rows);
   audit_(user, action, rows.length+' row(s) appended'); return {count:rows.length};
 }
+
+function sendQueuedEmails_(emails, user){
+  setupSheets_();
+  let sent = 0;
+  emails.forEach(function(e){
+    if(!e.email) return;
+    GmailApp.sendEmail(e.email, e.subject || 'Rock Foundation School', e.body || '', {name:'Rock Foundation School'});
+    sent++;
+  });
+  audit_(user, 'SEND_EMAIL_QUEUE', sent + ' email(s) sent through GmailApp');
+  return {sent: sent};
+}
+
 function getDashboardData_(){ setupSheets_(); return {message:'Use frontend to render dashboard. Backend is active.'}; }
 function audit_(user, action, details){
   setupSheets_(); SpreadsheetApp.getActive().getSheetByName(SHEETS.AUDIT).appendRow([new Date(), user, action, details]);

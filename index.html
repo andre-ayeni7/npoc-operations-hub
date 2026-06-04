@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#102414" />
-  <title>NPOC Operations Hub V1.0</title>
+  <title>NPOC Operations Hub V1.0.3</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -21,7 +21,7 @@
         </div>
       </div>
       <h1>NPOC Operations Hub</h1>
-      <p>Secure workspace for call list import, QR attendance, graduation tracking, admin Sunday attendance and monthly reporting.</p>
+      <p class="login-tagline">Rock Foundation School · Class Operations</p>
       <div class="login-grid">
         <label>Display name<input id="loginName" required placeholder="e.g. Andrew" /></label>
         <label>Admin profile<select id="loginAdmin"></select></label>
@@ -29,7 +29,6 @@
         <label>Access code<input id="loginCode" type="password" placeholder="Demo: npoc2026" /></label>
       </div>
       <button class="btn btn-primary btn-full" type="submit">Enter operations hub</button>
-      <small class="login-note">Demo access code: <b>npoc2026</b>. Replace with Apps Script verified login before production.</small>
     </form>
   </section>
 
@@ -48,6 +47,8 @@
         <button data-page="qrAttendance">QR Attendance</button>
         <button data-page="students">Student Progress</button>
         <button data-page="adminTasks">Admin Tasks & Evaluation</button>
+        <button data-page="facultySchedule">Faculty Schedule</button>
+        <button data-page="emailAutomation">Email Automation</button>
         <button data-page="adminAttendance">Admin Attendance</button>
         <button data-page="reports">Monthly Report</button>
         <button data-page="adminCenter">Admin Center</button>
@@ -138,6 +139,59 @@
             </div>
             <div class="mobile-card-list" id="taskMobileCards"></div>
             <div class="table-wrap"><table><thead><tr><th>Task</th><th>Admin</th><th>Category</th><th>Due</th><th>Priority</th><th>Status</th><th>Score</th><th>Proof</th><th>Action</th></tr></thead><tbody id="taskBody"></tbody></table></div>
+          </div>
+        </section>
+
+
+        <section class="page" id="facultySchedule">
+          <div class="page-intro"><h3>Faculty schedule</h3><p>Maintain class dates, modules and assigned faculty. This feeds reminders, admin tasks and the monthly report calendar.</p></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="card-head"><h3>Add / edit faculty class</h3><span>Module 1 / Module 2</span></div>
+              <form id="facultyForm" class="form-grid">
+                <input type="hidden" id="facultyEditId" />
+                <label>Class date<input id="facultyDate" placeholder="e.g. 7th June, 2026" required /></label>
+                <label>Module<select id="facultyModule"><option>Module 1</option><option>Module 2</option></select></label>
+                <label>Faculty name<input id="facultyName" placeholder="Faculty name" required /></label>
+                <label>Status<select id="facultyStatus"><option>Scheduled</option><option>Confirmed</option><option>Reminder Sent</option><option>Completed</option><option>Rescheduled</option></select></label>
+                <label class="span-2">Notes<textarea id="facultyNotes" placeholder="Reminder notes, replacement faculty, or special instruction"></textarea></label>
+                <button class="btn btn-primary" type="submit">Save schedule</button>
+                <button class="btn btn-soft" type="button" id="resetFacultyBtn">Reset</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="card-head"><h3>Upcoming faculty duties</h3><span id="facultyCountLabel">0 classes</span></div>
+              <div class="feed" id="facultyFeed"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="toolbar"><label>Module filter<select id="facultyFilter"><option>All</option><option>Module 1</option><option>Module 2</option></select></label><button class="btn btn-soft" id="facultyReminderBtn">Log reminder sent</button></div>
+            <div class="mobile-card-list" id="facultyMobileCards"></div>
+            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Module</th><th>Faculty</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead><tbody id="facultyBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <section class="page" id="emailAutomation">
+          <div class="page-intro"><h3>Email automation</h3><p>First-timer and Module 2 invitation emails are queued automatically when attendance or registration is recorded. Backend sending will run through Google Apps Script GmailApp.</p></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="card-head"><h3>First timer email</h3><span>Sent after details are cleaned</span></div>
+              <label>Subject<input id="firstEmailSubject" /></label>
+              <label>Body<textarea id="firstEmailBody" class="template-area"></textarea></label>
+              <button class="btn btn-primary" id="saveEmailTemplatesBtn">Save email templates</button>
+            </div>
+            <div class="card">
+              <div class="card-head"><h3>Second timer email</h3><span>Sent after Module 1 attendance</span></div>
+              <label>Subject<input id="secondEmailSubject" /></label>
+              <label>Body<textarea id="secondEmailBody" class="template-area"></textarea></label>
+              <button class="btn btn-soft" id="previewSecondEmailBtn">Preview second timer email</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Email queue</h3><span id="emailQueueLabel">0 pending</span></div>
+            <div class="button-row"><button class="btn btn-primary" id="sendQueuedEmailsBtn">Mark queued emails as sent</button><button class="btn btn-soft" id="clearSentEmailsBtn">Clear sent emails</button></div>
+            <div class="mobile-card-list" id="emailMobileCards"></div>
+            <div class="table-wrap"><table><thead><tr><th>Type</th><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Queued</th></tr></thead><tbody id="emailQueueBody"></tbody></table></div>
           </div>
         </section>
 
