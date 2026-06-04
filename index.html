@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#102414" />
+  <title>NPOC Operations Hub</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="loader-card">
+      <img src="assets/hotr-logo.png" alt="House on the Rock logo" />
+      <strong>NPOC Operations Hub</strong>
+      <span>Preparing dashboard...</span>
+    </div>
+  </div>
+
+  <section class="login-screen" id="loginScreen" aria-label="Login screen">
+    <div class="login-bg-overlay"></div>
+    <form class="login-card refined-login" id="loginForm">
+      <div class="login-brand-row">
+        <img src="assets/hotr-logo.png" alt="House on the Rock logo" />
+        <div>
+          <span>House on the Rock Lagos</span>
+          <strong>Rock Foundation School</strong>
+        </div>
+      </div>
+      <h2>NPOC Operations Hub</h2>
+      <p class="login-copy">Secure workspace for call list import, Saturday calling, student attendance, admin evaluation, and monthly reporting.</p>
+      <label>
+        Admin name
+        <input id="loginName" type="text" placeholder="Your display name" autocomplete="name" required />
+      </label>
+      <label>
+        Access role
+        <select id="loginRole">
+          <option value="lead">Lead Admin</option>
+          <option value="assistant">Assistant Lead Admin</option>
+          <option value="class">Class Admin</option>
+        </select>
+      </label>
+      <label>
+        Admin profile
+        <select id="loginAdmin"></select>
+      </label>
+      <button class="btn btn-primary btn-full" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <div class="app-shell is-hidden" id="appShell">
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    <aside class="sidebar" id="sidebar" aria-label="Application navigation">
+      <div class="sidebar-top">
+        <div class="brand-block">
+          <img src="assets/hotr-logo.png" alt="House on the Rock logo" class="brand-logo" />
+          <div>
+            <p class="eyebrow">Rock Foundation School</p>
+            <h1>NPOC Hub</h1>
+          </div>
+        </div>
+        <button class="icon-btn close-panel" id="closeSidebarBtn" aria-label="Close navigation panel">×</button>
+      </div>
+
+      <div class="user-card">
+        <div class="avatar" id="userAvatar">A</div>
+        <div>
+          <strong id="userNameDisplay">Admin</strong>
+          <span id="userRoleDisplay">Lead Admin</span>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Overview</span></button>
+        <button class="nav-item" data-page="import"><span class="nav-icon">⇧</span><span>Import Call List</span></button>
+        <button class="nav-item" data-page="calls"><span class="nav-icon">☎</span><span>My Calling List</span></button>
+        <button class="nav-item" data-page="attendance"><span class="nav-icon">◫</span><span>Student Attendance</span></button>
+        <button class="nav-item" data-page="firstTimers"><span class="nav-icon">✦</span><span>First Timers</span></button>
+        <button class="nav-item" data-page="roles"><span class="nav-icon">♛</span><span>Super Admin</span></button>
+        <button class="nav-item" data-page="admins"><span class="nav-icon">◎</span><span>Admin Evaluation</span></button>
+        <button class="nav-item" data-page="reports"><span class="nav-icon">▣</span><span>Monthly Reports</span></button>
+        <button class="nav-item" data-page="activity"><span class="nav-icon">◷</span><span>Activity Log</span></button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-soft btn-full" id="syncBtn">Sync backend</button>
+        <button class="btn btn-danger btn-full" id="logoutBtn">Log out</button>
+      </div>
+    </aside>
+
+    <main class="main" id="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Open navigation panel">☰</button>
+        <div class="title-block">
+          <p class="eyebrow">House on the Rock · NPOC</p>
+          <h2 id="pageTitle">Operations Overview</h2>
+        </div>
+        <div class="topbar-actions">
+          <select id="monthFilter" class="select-pill" aria-label="Select reporting month">
+            <option>May 2026</option>
+            <option>June 2026</option>
+            <option>July 2026</option>
+            <option>August 2026</option>
+          </select>
+          <button class="btn btn-ghost" id="exportDataBtn">Export</button>
+          <button class="btn btn-primary" data-page-link="import">Upload list</button>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="page active" id="dashboard">
+          <div class="hero-panel">
+            <div class="hero-copy">
+              <p class="eyebrow">Executive control center</p>
+              <h3>One calm operating system for calls, attendance, first timers, admins and reports.</h3>
+              <p class="muted">Designed for continuous monthly operations with Google Sheets + Apps Script as the backend engine.</p>
+            </div>
+            <div class="hero-actions">
+              <button class="btn btn-primary" data-page-link="import">Import church call list</button>
+              <button class="btn btn-outline" id="seedDemoBtn">Load May demo</button>
+            </div>
+          </div>
+
+          <div class="role-dashboard" id="roleDashboard"></div>
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="analytics-grid two-col">
+            <article class="card chart-card compact-chart">
+              <div class="card-head">
+                <div><p class="eyebrow">Attendance performance</p><h3>Expected vs actual</h3></div>
+                <span class="chart-chip">Animated</span>
+              </div>
+              <canvas id="attendanceChart" aria-label="Expected versus actual chart"></canvas>
+            </article>
+            <article class="card chart-card compact-chart">
+              <div class="card-head">
+                <div><p class="eyebrow">Call pipeline</p><h3>Call status distribution</h3></div>
+                <span class="chart-chip">Live</span>
+              </div>
+              <canvas id="statusChart" aria-label="Call status distribution chart"></canvas>
+            </article>
+          </div>
+
+          <div class="analytics-grid two-col">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Priority actions</p><h3>What needs attention</h3></div></div>
+              <div class="action-list" id="actionList"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Admin workload</p><h3>Assigned call balance</h3></div></div>
+              <div id="workloadBars" class="workload-bars"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="import">
+          <div class="section-grid two-col">
+            <article class="card upload-card">
+              <p class="eyebrow">Step 1</p>
+              <h3>Upload the Excel call list from church office</h3>
+              <p class="muted">Supports the church office Excel format, including sheets like <strong>FT.31st.05.2026</strong> with Name, Local Mobile Number, Foreign Mobile Number, Email, Location, Gender, and HOTR decision columns. It ignores summary sheets automatically.</p>
+              <div class="dropzone" id="dropzone">
+                <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+                <button class="btn btn-primary" id="chooseFileBtn">Choose Excel/CSV file</button>
+                <p>or drag and drop the file here</p>
+              </div>
+              <div class="form-grid">
+                <label>Batch name<input id="batchName" value="May 2026 Call List" /></label>
+                <label>Distribution mode<select id="distributionMode"><option value="balanced">Balanced rotation</option><option value="random">Balanced random</option></select></label>
+              </div>
+              <div class="button-row">
+                <button class="btn btn-outline" id="clearCallListBtn">Clear imported list</button>
+                <button class="btn btn-primary" id="distributeBtn">Distribute calls</button>
+              </div>
+            </article>
+
+            <article class="card process-card">
+              <p class="eyebrow">Operational flow</p>
+              <h3>From church list to admin action</h3>
+              <ol class="process-list">
+                <li><strong>Import</strong><span>Church office sends Excel list.</span></li>
+                <li><strong>Clean</strong><span>Phones become consistent 234 format.</span></li>
+                <li><strong>Distribute</strong><span>Records shared across current admins.</span></li>
+                <li><strong>Track</strong><span>Admins update call outcomes and notes.</span></li>
+                <li><strong>Report</strong><span>Dashboard updates for leadership.</span></li>
+              </ol>
+            </article>
+          </div>
+
+          <article class="card table-card">
+            <div class="card-head stack-on-mobile">
+              <div><p class="eyebrow">Imported records</p><h3>Call list preview</h3></div>
+              <input id="importSearch" class="search" placeholder="Search imported list..." />
+            </div>
+            <div class="table-wrap"><table id="importTable"></table></div>
+          </article>
+        </section>
+
+        <section class="page" id="calls">
+          <div class="admin-toolbar card">
+            <div>
+              <p class="eyebrow">Admin workspace</p>
+              <h3>Every admin sees their own assigned calling list</h3>
+              <p class="muted">Lead and Assistant Lead can switch between admins. Class admins default to their assigned list.</p>
+            </div>
+            <div class="toolbar-controls">
+              <select id="adminSelect"></select>
+              <select id="statusFilter"><option value="all">All statuses</option></select>
+              <button class="btn btn-outline" id="copyAdminLinkBtn">Copy admin link</button>
+            </div>
+          </div>
+          <div class="mini-kpi-row" id="adminMiniKpis"></div>
+          <article class="card table-card">
+            <div class="card-head stack-on-mobile"><div><p class="eyebrow">Calling list</p><h3 id="adminListTitle">Assigned parishioners</h3></div><input id="adminSearch" class="search" placeholder="Search name or phone..." /></div>
+            <div class="table-wrap"><table id="adminCallTable"></table></div>
+          </article>
+        </section>
+
+        <section class="page" id="attendance">
+          <div class="section-grid two-col">
+            <article class="card chart-card compact-chart"><div class="card-head"><div><p class="eyebrow">First class</p><h3>Expected vs actual</h3></div></div><canvas id="firstClassChart"></canvas></article>
+            <article class="card chart-card compact-chart"><div class="card-head"><div><p class="eyebrow">Second class</p><h3>Expected vs actual</h3></div></div><canvas id="secondClassChart"></canvas></article>
+          </div>
+          <article class="card table-card"><div class="card-head"><div><p class="eyebrow">May report source</p><h3>Student attendance summary</h3></div></div><div class="table-wrap"><table id="attendanceTable"></table></div></article>
+        </section>
+
+        <section class="page" id="firstTimers">
+          <div class="hero-panel compact"><div><p class="eyebrow">First-time tracking</p><h3>Calculate first timers from earliest attendance date, then trigger welcome email workflow.</h3><p class="muted">Apps Script will read Attendance_Responses, build First_Timers, and update welcome email status.</p></div><button class="btn btn-primary" id="simulateEmailBtn">Mark welcome emails sent</button></div>
+          <article class="card table-card"><div class="table-wrap"><table id="firstTimerTable"></table></div></article>
+        </section>
+
+        <section class="page" id="roles">
+          <div class="section-grid two-col">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Super admin</p><h3>Lead and Assistant Lead dashboard</h3></div></div>
+              <div class="super-grid" id="superAdminCards"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Class admin control</p><h3>Edit admins and departments</h3></div><button class="btn btn-primary" id="addAdminBtn">Add admin</button></div>
+              <div class="admin-editor" id="adminEditor"></div>
+            </article>
+          </div>
+          <article class="card table-card"><div class="card-head"><div><p class="eyebrow">Role matrix</p><h3>Access and responsibility map</h3></div></div><div class="table-wrap"><table id="roleMatrixTable"></table></div></article>
+        </section>
+
+        <section class="page" id="admins">
+          <div class="analytics-grid two-col">
+            <article class="card chart-card compact-chart"><div class="card-head"><div><p class="eyebrow">Admin attendance</p><h3>May attendance count</h3></div></div><canvas id="adminAttendanceChart"></canvas></article>
+            <article class="card"><div class="card-head"><div><p class="eyebrow">Evaluation rules</p><h3>Performance is operational impact</h3></div></div><ul class="check-list"><li>Calling completion and outcome quality</li><li>Task completion and proof link</li><li>Admin attendance and punctuality</li><li>Student conversion from call → registration → attendance</li></ul></article>
+          </div>
+          <article class="card table-card"><div class="table-wrap"><table id="adminEvalTable"></table></div></article>
+        </section>
+
+        <section class="page" id="reports">
+          <div class="hero-panel compact"><div><p class="eyebrow">Leadership reporting</p><h3>Monthly report generator for NPOC leadership.</h3><p class="muted">Dashboard aligns with the Google Sheet tabs: Call List Import, Attendance Responses, First Timers, Graduation Tracker, Admin Tasks and Monthly Report.</p></div><button class="btn btn-primary" id="copyReportSummaryBtn">Copy summary</button></div>
+          <div class="kpi-grid" id="reportKpis"></div>
+          <article class="card table-card"><div class="table-wrap"><table id="reportTable"></table></div></article>
+        </section>
+
+        <section class="page" id="activity">
+          <div class="section-grid two-col">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Session monitoring</p><h3>Login / logout history</h3></div><button class="btn btn-outline" id="clearLogsBtn">Clear local logs</button></div>
+              <div class="table-wrap small-table"><table id="sessionLogTable"></table></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Action revisions</p><h3>Admin activity trail</h3></div></div>
+              <div class="activity-feed" id="activityFeed"></div>
+            </article>
+          </div>
+          <article class="card table-card">
+            <div class="card-head"><div><p class="eyebrow">System audit</p><h3>All recorded changes</h3></div></div>
+            <div class="table-wrap"><table id="auditTable"></table></div>
+          </article>
+        </section>
+
+        <section class="page" id="settings">
+          <div class="section-grid two-col">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Backend engine</p><h3>Google Sheets + Apps Script connection</h3></div></div>
+              <label>Apps Script Web App URL<input id="backendUrl" placeholder="https://script.google.com/macros/s/.../exec" /></label>
+              <label>Google Sheet ID<input id="sheetId" placeholder="Paste spreadsheet ID here" /></label>
+              <div class="button-row"><button class="btn btn-outline" id="testBackendBtn">Test connection</button><button class="btn btn-primary" id="saveSettingsBtn">Save settings</button></div>
+              <p class="muted tiny">Frontend payloads are shaped to match the Apps Script contract included in the backend folder.</p>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Current admins</p><h3>Live admin pool</h3></div></div>
+              <div class="pill-list" id="adminSettingsList"></div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <footer class="app-footer single-footer">
+        <span>Rock Foundation School · NPOC Operations Hub</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
