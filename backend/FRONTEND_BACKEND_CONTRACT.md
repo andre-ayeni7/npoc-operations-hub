@@ -1,0 +1,33 @@
+# Frontend Backend Contract
+
+The frontend calls the Apps Script Web App using:
+
+`WEB_APP_URL?action=ACTION_NAME&api_key=API_KEY`
+
+POST payloads are sent as JSON text in the request body.
+
+Core actions used:
+
+- GET_DASHBOARD
+- IMPORT_CALL_LIST
+- GET_ADMIN_CALLS
+- UPDATE_CALL_STATUS
+- RECORD_ATTENDANCE
+- GET_STUDENT_PROGRESS
+- MARK_GRADUATED
+- CREATE_TASK
+- GET_TASK_SCORECARD
+- CREATE_FACULTY_SCHEDULE
+- GET_FACULTY_SCHEDULE
+- GET_EMAIL_TEMPLATES
+- SAVE_EMAIL_TEMPLATE
+- GET_EMAIL_QUEUE
+- ADMIN_CHECK_IN
+- GET_ADMIN_ATTENDANCE_TREND
+- GET_MONTHLY_REPORT
+- GET_ADMINS
+- CREATE_ADMIN
+- UPDATE_ADMIN
+- GET_AUDIT_LOG
+
+The frontend has local fallback mode, but production should use backend mode.

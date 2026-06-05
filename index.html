@@ -1,226 +1,127 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#102414" />
-  <title>NPOC Operations Hub V1.1 Backend Ready</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NPOC Operations Hub V2.0</title>
+  <meta name="description" content="Rock Foundation School · NPOC Operations Hub" />
+  <link rel="icon" href="assets/branding/hotr-logo.png" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
-  <script>window.HOTR_LOGO_DATA = "./assets/hotr-logo-fit.png";</script>
-  <section class="login-screen" id="loginScreen">
-    <div class="login-bg" aria-hidden="true"></div>
-    <form class="login-card" id="loginForm">
+  <div id="toastRoot" class="toast-root"></div>
+
+  <section id="loginScreen" class="login-screen" aria-label="NPOC login">
+    <div class="login-bg"></div>
+    <div class="login-card">
       <div class="login-brand">
-        <img class="brand-img" src="./assets/hotr-logo-fit.png" onerror="this.src='./assets/hotr-logo.png'" alt="House on the Rock logo" />
+        <img src="assets/branding/hotr-logo.png" alt="House on The Rock logo" class="login-logo" onerror="this.style.display='none'" />
         <div>
-          <span>House on the Rock Lagos</span>
+          <span>House on The Rock Lagos</span>
           <strong>Rock Foundation School</strong>
         </div>
       </div>
       <h1>NPOC Operations Hub</h1>
-      <p class="login-tagline">Rock Foundation School · Class Operations</p>
-      <div class="login-grid">
-        <label>Display name<input id="loginName" required placeholder="e.g. Andrew" /></label>
-        <label>Admin profile<select id="loginAdmin"></select></label>
-        <label>Access role<select id="loginRole"><option value="super">Super Admin</option><option value="lead">Lead Admin</option><option value="assistant">Assistant Lead Admin</option><option value="class">Class Admin</option><option value="admin">Ordinary Admin</option></select></label>
-        <label>Access code<input id="loginCode" type="password" placeholder="Demo: npoc2026" /></label>
-      </div>
-      <button class="btn btn-primary btn-full" type="submit">Enter operations hub</button>
-    </form>
+      <p>Secure workspace for call-list import, QR attendance, graduation tracking, admin tasks, and monthly reports.</p>
+
+      <form id="loginForm" class="login-form">
+        <label>
+          Display name
+          <input id="loginName" type="text" value="Andrew" placeholder="e.g. Andrew" required />
+        </label>
+        <label>
+          Email
+          <input id="loginEmail" type="email" value="andrew@rfs.org" placeholder="e.g. andrew@rfs.org" required />
+        </label>
+        <label>
+          Access role
+          <select id="loginRole">
+            <option>Super Admin</option>
+            <option selected>Lead Admin</option>
+            <option>Assistant Lead Admin</option>
+            <option>Class Admin</option>
+            <option>Ordinary Admin</option>
+          </select>
+        </label>
+        <label>
+          Access code
+          <input id="loginCode" type="password" value="npoc2026" placeholder="Enter access code" required />
+        </label>
+        <button type="submit" class="btn btn-primary btn-full">Enter operations hub</button>
+      </form>
+      <small class="login-note">Demo access code: <b>npoc2026</b>. Replace with Apps Script verified login before production.</small>
+    </div>
   </section>
 
-  <div class="app-shell hidden" id="appShell">
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-    <aside class="sidebar" id="sidebar">
-      <div class="side-head">
-        <div class="side-brand"><img class="brand-img" src="./assets/hotr-logo-fit.png" onerror="this.src='./assets/hotr-logo.png'" alt="HOTR" /><div><small>Rock Foundation School</small><b>NPOC Hub</b></div></div>
-        <button class="icon-btn" id="closeSidebar">×</button>
+  <div id="appShell" class="app-shell is-hidden">
+    <aside id="sidebar" class="sidebar" aria-label="Main navigation">
+      <div class="sidebar-top">
+        <div class="side-brand">
+          <img src="assets/branding/hotr-logo.png" alt="HOTR Logo" onerror="this.style.display='none'" />
+          <div>
+            <span>Rock Foundation School</span>
+            <strong>NPOC Hub</strong>
+          </div>
+        </div>
+        <button id="closeSidebar" class="icon-btn close-sidebar" aria-label="Close sidebar">×</button>
       </div>
-      <div class="user-pill"><span id="avatar">A</span><div><b id="currentUser">Admin</b><small id="currentRole">Lead Admin</small></div></div>
-      <nav class="nav" id="nav">
-        <button class="active" data-page="dashboard">Overview</button>
-        <button data-page="callImport">Call List Import</button>
-        <button data-page="myCalls">My Calling List</button>
-        <button data-page="qrAttendance">QR Attendance</button>
-        <button data-page="students">Student Progress</button>
-        <button data-page="adminTasks">Admin Tasks & Evaluation</button>
-        <button data-page="facultySchedule">Faculty Schedule</button>
-        <button data-page="emailAutomation">Email Automation</button>
-        <button data-page="adminAttendance">Admin Attendance</button>
-        <button data-page="reports">Monthly Report</button>
-        <button data-page="adminCenter">Admin Center</button>
-        <button data-page="audit">Audit & Sessions</button>
-        <button data-page="settings">Settings</button>
-      </nav>
-      <button class="btn btn-danger btn-full" id="logoutBtn">Log out</button>
+
+      <div class="user-chip">
+        <div id="userInitials" class="avatar">A</div>
+        <div>
+          <strong id="currentUserName">Andrew</strong>
+          <span id="currentUserRole">Lead Admin</span>
+        </div>
+      </div>
+
+      <nav id="mainNav" class="main-nav"></nav>
+
+      <div class="sidebar-bottom">
+        <button id="syncBackendBtn" class="btn btn-soft">Sync backend</button>
+        <button id="logoutBtn" class="btn btn-danger">Log out</button>
+      </div>
     </aside>
+
+    <div id="scrim" class="scrim"></div>
 
     <main class="main">
       <header class="topbar">
-        <button class="icon-btn" id="menuBtn">☰</button>
-        <div><small>House on the Rock · NPOC</small><h2 id="pageTitle">Operations Overview</h2></div>
-        <div class="top-actions"><select id="monthSelect"></select><button class="btn btn-soft" id="syncBtn">Sync</button></div>
+        <button id="openSidebar" class="icon-btn" aria-label="Open sidebar">☰</button>
+        <div>
+          <span>House on the Rock · NPOC</span>
+          <h2 id="pageTitle">Operations Overview</h2>
+        </div>
+        <div class="topbar-actions">
+          <select id="globalMonth" aria-label="Report month">
+            <option value="May2026" selected>May 2026</option>
+            <option value="June2026">June 2026</option>
+            <option value="July2026">July 2026</option>
+          </select>
+          <button id="quickReportBtn" class="btn btn-primary">Generate report</button>
+        </div>
       </header>
-      <div class="content">
-        <section class="page active" id="dashboard">
-          <div class="hero-card"><div><small class="eyebrow">Executive control center</small><h3>Continuous NPOC operations from call list to graduation.</h3><p>Track parishioners, call assignments, QR attendance, module progress, graduates, admin attendance and monthly report KPIs.</p></div><div class="hero-metrics"><b id="heroRate">40%</b><span>May attendance rate</span></div></div>
-          <div class="kpi-grid" id="kpiGrid"></div>
-          <div class="grid two">
-            <div class="card chart-card"><div class="card-head"><h3>Expected vs Actual</h3><span>Monthly report</span></div><canvas id="expectedActualChart"></canvas></div>
-            <div class="card chart-card"><div class="card-head"><h3>Pipeline</h3><span>Students by stage</span></div><canvas id="pipelineChart"></canvas></div>
-          </div>
-          <div class="grid two">
-            <div class="card"><div class="card-head"><h3>Action queue</h3><span>Items needing attention</span></div><div id="actionQueue" class="feed"></div></div>
-            <div class="card"><div class="card-head"><h3>Role dashboard</h3><span>Super admin / class admin overview</span></div><div id="roleCards" class="role-grid"></div></div>
-          </div>
-        </section>
 
-        <section class="page" id="callImport">
-          <div class="page-intro"><h3>Church call list import</h3><p>Upload the Excel file received from church office. The system detects name/phone/email columns, cleans phone numbers to <b>234...</b>, removes duplicates, and distributes calls across active admins.</p></div>
-          <div class="card"><div class="dropzone" id="dropzone"><b>Drop Excel/CSV file here</b><span>or click to upload church call list</span><input type="file" id="fileInput" accept=".xlsx,.xls,.csv" /></div><div class="button-row"><button class="btn btn-primary" id="distributeBtn">Distribute calls</button><button class="btn btn-soft" id="clearCallListBtn">Clear imported list</button><button class="btn btn-soft" id="downloadTemplateBtn">Download import template</button></div><p class="muted" id="importStatus">No file imported yet.</p></div>
-          <div class="card"><div class="card-head"><h3>Imported call list</h3><span id="callCountLabel">0 records</span></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Cleaned</th><th>Email</th><th>Assigned Admin</th><th>Status</th><th>Notes</th></tr></thead><tbody id="callListBody"></tbody></table></div></div>
-        </section>
+      <section id="view-dashboard" class="view active"></section>
+      <section id="view-call-import" class="view"></section>
+      <section id="view-my-calls" class="view"></section>
+      <section id="view-attendance" class="view"></section>
+      <section id="view-students" class="view"></section>
+      <section id="view-tasks" class="view"></section>
+      <section id="view-faculty" class="view"></section>
+      <section id="view-email" class="view"></section>
+      <section id="view-admin-attendance" class="view"></section>
+      <section id="view-reports" class="view"></section>
+      <section id="view-admin-center" class="view"></section>
+      <section id="view-audit" class="view"></section>
+      <section id="view-settings" class="view"></section>
 
-        <section class="page" id="myCalls">
-          <div class="page-intro"><h3>My calling list</h3><p>Admins only see their own assigned calls. Lead/Admin roles can switch between admins.</p></div>
-          <div class="card"><div class="toolbar"><label>Viewing admin<select id="adminViewSelect"></select></label><label>Status filter<select id="callStatusFilter"><option>All</option></select></label><button class="btn btn-primary" id="copyAdminLinkBtn">Copy admin link</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Notes</th><th>Registered</th><th>Updated</th></tr></thead><tbody id="myCallsBody"></tbody></table></div></div>
-        </section>
-
-        <section class="page" id="qrAttendance">
-          <div class="page-intro"><h3>QR Attendance & Registration</h3><p>Second timers can scan the class QR code. The payload should be the cleaned phone number or a link containing <b>?phone=234...</b>. Admin selects Module 1 or 2 and records physical/online attendance.</p></div>
-          <div class="grid two">
-            <div class="card"><div class="card-head"><h3>Record student attendance</h3><span>Module 1 / Module 2</span></div><form id="attendanceForm" class="form-grid"><label>Phone / QR payload<input id="attPhone" placeholder="2348012345678" required /></label><label>Student name<input id="attName" placeholder="Auto-filled or type name" /></label><label>Module<select id="attModule"><option>Module 1</option><option>Module 2</option></select></label><label>Attendance mode<select id="attMode"><option>Physical</option><option>Online</option></select></label><label>Class date<input id="attDate" type="date" required /></label><label>Registration status<select id="regStatus"><option>Registered</option><option>Walk-in</option><option>Pending Registration</option></select></label><button class="btn btn-primary" type="submit">Record attendance</button><button class="btn btn-soft" type="button" id="cameraScanBtn">Use camera scan</button></form><p class="muted">Camera scan uses browser BarcodeDetector when supported. For demo, paste QR payload manually.</p></div>
-            <div class="card"><div class="card-head"><h3>Attendance intelligence</h3><span>Auto progression</span></div><div class="mini-kpis" id="attendanceIntel"></div><div class="feed" id="recentAttendance"></div></div>
-          </div>
-          <div class="card"><div class="card-head"><h3>Attendance records</h3><span id="attendanceCount">0 records</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Module</th><th>Mode</th><th>First attendance?</th><th>Registered?</th></tr></thead><tbody id="attendanceBody"></tbody></table></div></div>
-        </section>
-
-        <section class="page" id="students">
-          <div class="page-intro"><h3>Student progress & graduation engine</h3><p>The system identifies who has not taken Module 1, who has taken Module 1 but not Module 2, and who is eligible for graduation.</p></div>
-          <div class="grid three" id="progressCards"></div>
-          <div class="card"><div class="toolbar"><label>Student filter<select id="studentFilter"><option>All</option><option>Yet to take Module 1</option><option>Yet to take Module 2</option><option>Eligible for Graduation</option><option>Graduated</option></select></label><button class="btn btn-primary" id="markGraduatedBtn">Mark eligible as graduated</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Module 1</th><th>Module 2</th><th>Status</th><th>First Attendance</th><th>Last Attendance</th></tr></thead><tbody id="studentBody"></tbody></table></div></div>
-        </section>
-
-
-        <section class="page" id="adminTasks">
-          <div class="page-intro"><h3>Admin task schedule & evaluation</h3><p>Assign weekly class duties, track completion, capture proof, score performance and feed the admin evaluation dashboard. This mirrors the Admin Schedule & Evaluation workbook inside the application.</p></div>
-          <div class="grid two">
-            <div class="card">
-              <div class="card-head"><h3>Create / update task</h3><span>Sunday operations</span></div>
-              <form id="taskForm" class="form-grid">
-                <input type="hidden" id="taskEditId" />
-                <label>Task title<input id="taskTitle" placeholder="e.g. Student Attendance" required /></label>
-                <label>Assigned admin<select id="taskAdmin"></select></label>
-                <label>Task category<select id="taskCategory"><option>Class Moderation</option><option>Student Registration</option><option>Student Attendance</option><option>Admin Attendance</option><option>Physical Supervision</option><option>Online Supervision</option><option>First Timers Reception</option><option>Call List Update</option><option>Faculty Confirmation</option><option>Bulk SMS</option><option>Student Follow-up</option><option>Report</option></select></label>
-                <label>Priority<select id="taskPriority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
-                <label>Due date<input id="taskDue" type="date" required /></label>
-                <label>Status<select id="taskStatus"><option>Pending</option><option>In Progress</option><option>Completed</option><option>Late</option><option>Reassigned</option><option>Missed</option></select></label>
-                <label>Proof / link<input id="taskProof" placeholder="Form link, photo folder, report link" /></label>
-                <label>Evaluation score<select id="taskScore"><option value="">Not scored</option><option>10</option><option>8</option><option>5</option><option>3</option><option>0</option></select></label>
-                <label class="span-2">Task description<textarea id="taskDescription" placeholder="What exactly should the admin do?"></textarea></label>
-                <button class="btn btn-primary" type="submit">Save task</button>
-                <button class="btn btn-soft" type="button" id="resetTaskBtn">Reset form</button>
-              </form>
-            </div>
-            <div class="card chart-card">
-              <div class="card-head"><h3>Admin task scorecard</h3><span>Completion and quality</span></div>
-              <canvas id="taskScoreChart"></canvas>
-              <div class="mini-kpis" id="taskMiniKpis"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="toolbar">
-              <label>Admin filter<select id="taskAdminFilter"><option>All</option></select></label>
-              <label>Status filter<select id="taskStatusFilter"><option>All</option><option>Pending</option><option>In Progress</option><option>Completed</option><option>Late</option><option>Reassigned</option><option>Missed</option></select></label>
-              <button class="btn btn-soft" id="autoAssignTasksBtn">Auto-balance tasks</button>
-            </div>
-            <div class="mobile-card-list" id="taskMobileCards"></div>
-            <div class="table-wrap"><table><thead><tr><th>Task</th><th>Admin</th><th>Category</th><th>Due</th><th>Priority</th><th>Status</th><th>Score</th><th>Proof</th><th>Action</th></tr></thead><tbody id="taskBody"></tbody></table></div>
-          </div>
-        </section>
-
-
-        <section class="page" id="facultySchedule">
-          <div class="page-intro"><h3>Faculty schedule</h3><p>Maintain class dates, modules and assigned faculty. This feeds reminders, admin tasks and the monthly report calendar.</p></div>
-          <div class="grid two">
-            <div class="card">
-              <div class="card-head"><h3>Add / edit faculty class</h3><span>Module 1 / Module 2</span></div>
-              <form id="facultyForm" class="form-grid">
-                <input type="hidden" id="facultyEditId" />
-                <label>Class date<input id="facultyDate" placeholder="e.g. 7th June, 2026" required /></label>
-                <label>Module<select id="facultyModule"><option>Module 1</option><option>Module 2</option></select></label>
-                <label>Faculty name<input id="facultyName" placeholder="Faculty name" required /></label>
-                <label>Status<select id="facultyStatus"><option>Scheduled</option><option>Confirmed</option><option>Reminder Sent</option><option>Completed</option><option>Rescheduled</option></select></label>
-                <label class="span-2">Notes<textarea id="facultyNotes" placeholder="Reminder notes, replacement faculty, or special instruction"></textarea></label>
-                <button class="btn btn-primary" type="submit">Save schedule</button>
-                <button class="btn btn-soft" type="button" id="resetFacultyBtn">Reset</button>
-              </form>
-            </div>
-            <div class="card">
-              <div class="card-head"><h3>Upcoming faculty duties</h3><span id="facultyCountLabel">0 classes</span></div>
-              <div class="feed" id="facultyFeed"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="toolbar"><label>Module filter<select id="facultyFilter"><option>All</option><option>Module 1</option><option>Module 2</option></select></label><button class="btn btn-soft" id="facultyReminderBtn">Log reminder sent</button></div>
-            <div class="mobile-card-list" id="facultyMobileCards"></div>
-            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Module</th><th>Faculty</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead><tbody id="facultyBody"></tbody></table></div>
-          </div>
-        </section>
-
-        <section class="page" id="emailAutomation">
-          <div class="page-intro"><h3>Email automation</h3><p>First-timer and Module 2 invitation emails are queued automatically when attendance or registration is recorded. Backend sending will run through Google Apps Script GmailApp.</p></div>
-          <div class="grid two">
-            <div class="card">
-              <div class="card-head"><h3>First timer email</h3><span>Sent after details are cleaned</span></div>
-              <label>Subject<input id="firstEmailSubject" /></label>
-              <label>Body<textarea id="firstEmailBody" class="template-area"></textarea></label>
-              <button class="btn btn-primary" id="saveEmailTemplatesBtn">Save email templates</button>
-            </div>
-            <div class="card">
-              <div class="card-head"><h3>Second timer email</h3><span>Sent after Module 1 attendance</span></div>
-              <label>Subject<input id="secondEmailSubject" /></label>
-              <label>Body<textarea id="secondEmailBody" class="template-area"></textarea></label>
-              <button class="btn btn-soft" id="previewSecondEmailBtn">Preview second timer email</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-head"><h3>Email queue</h3><span id="emailQueueLabel">0 pending</span></div>
-            <div class="button-row"><button class="btn btn-primary" id="sendQueuedEmailsBtn">Mark queued emails as sent</button><button class="btn btn-soft" id="clearSentEmailsBtn">Clear sent emails</button></div>
-            <div class="mobile-card-list" id="emailMobileCards"></div>
-            <div class="table-wrap"><table><thead><tr><th>Type</th><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Queued</th></tr></thead><tbody id="emailQueueBody"></tbody></table></div>
-          </div>
-        </section>
-
-        <section class="page" id="adminAttendance">
-          <div class="page-intro"><h3>Admin Sunday attendance</h3><p>Admins check in every Sunday as physical or online. Monthly report and admin evaluation pull from this log.</p></div>
-          <div class="grid two"><div class="card"><form id="adminAttendanceForm" class="form-grid"><label>Admin<select id="aaAdmin"></select></label><label>Attendance mode<select id="aaMode"><option>Physical</option><option>Online</option></select></label><label>Date<input id="aaDate" type="date" required /></label><label>Role on duty<select id="aaDuty"><option>General Admin</option><option>Class Admin</option><option>Online Admin</option><option>Registration Admin</option></select></label><button class="btn btn-primary" type="submit">Check in admin</button></form></div><div class="card chart-card"><div class="card-head"><h3>Admin attendance trend</h3><span>Physical + online</span></div><canvas id="adminTrendChart"></canvas></div></div>
-          <div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Admin</th><th>Mode</th><th>Duty</th><th>Checked by</th><th>Time</th></tr></thead><tbody id="adminAttendanceBody"></tbody></table></div></div>
-        </section>
-
-        <section class="page" id="reports">
-          <div class="page-intro"><h3>Monthly report generator</h3><p>Produces leadership-ready KPIs for expected count, attendance count, first timers, graduates, admin attendance, physical/online and module reports.</p></div>
-          <div class="card"><div class="toolbar"><label>Report month<select id="reportMonth"></select></label><button class="btn btn-primary" id="generateReportBtn">Generate report</button><button class="btn btn-soft" id="copyReportBtn">Copy report summary</button></div><div id="reportSummary" class="report-grid"></div></div>
-          <div class="grid two"><div class="card chart-card"><div class="card-head"><h3>First Class report</h3><span>Expected vs actual</span></div><canvas id="firstClassChart"></canvas></div><div class="card chart-card"><div class="card-head"><h3>Second Class report</h3><span>Expected vs actual</span></div><canvas id="secondClassChart"></canvas></div></div>
-        </section>
-
-        <section class="page" id="adminCenter">
-          <div class="page-intro"><h3>Admin center</h3><p>Lead and Assistant Lead Admins can manage admins, roles, departments, active status and backend access mapping.</p></div>
-          <div class="grid two"><div class="card"><div class="card-head"><h3>Admins</h3><button class="btn btn-soft" id="addAdminBtn">Add admin</button></div><div id="adminEditor" class="admin-editor"></div><button class="btn btn-primary" id="saveAdminsBtn">Save admin changes</button></div><div class="card"><div class="card-head"><h3>Permissions</h3><span>RBAC backend contract</span></div><div class="permission-list"><p><b>Super Admin:</b> Everything, backend settings, user management.</p><p><b>Lead Admin:</b> Reports, imports, all views, admin evaluation.</p><p><b>Assistant Lead:</b> Reports, attendance, call tracking.</p><p><b>Class Admin:</b> Student/admin attendance and assigned calls.</p><p><b>Ordinary Admin:</b> Own call list and limited updates.</p></div></div></div>
-        </section>
-
-        <section class="page" id="audit"><div class="page-intro"><h3>Audit log & sessions</h3><p>Tracks login, logout, uploads, status edits, attendance edits, graduation edits and backend syncs.</p></div><div class="grid two"><div class="card"><div class="card-head"><h3>Activity log</h3><button class="btn btn-soft" id="clearAuditBtn">Clear log</button></div><div class="feed" id="auditFeed"></div></div><div class="card"><div class="card-head"><h3>Login sessions</h3><span>Admin history</span></div><div class="feed" id="sessionFeed"></div></div></div></section>
-
-        <section class="page" id="settings"><div class="page-intro"><h3>Backend & security settings</h3><p>Connect to Google Apps Script + Google Sheets. Front-end uses local demo data until backend URL is configured.</p></div><div class="grid two"><div class="card"><form id="settingsForm" class="form-grid"><label>Apps Script Web App URL<input id="backendUrl" placeholder="https://script.google.com/macros/s/.../exec" /></label><label>API Key<input id="apiKey" placeholder="Set in Script Properties" /></label><label>Google Sheet ID<input id="sheetId" placeholder="Spreadsheet ID" /></label><label>Allowed domain<input id="allowedDomain" placeholder="optional: hotr..." /></label><button class="btn btn-primary" type="submit">Save settings</button></form></div><div class="card"><h3>Security notes for production</h3><ul class="clean-list"><li>Use Apps Script Session user email verification.</li><li>Set an API key in Script Properties.</li><li>Whitelist allowed admin emails in the Users sheet.</li><li>All writes must append to Audit_Log.</li><li>Use LockService to prevent double submissions.</li></ul></div></div></section>
-      </div>
       <footer class="footer">Rock Foundation School · NPOC Operations Hub</footer>
     </main>
   </div>
-  <div class="toast" id="toast"></div>
-  <script src="backend-client.js"></script>
-  <script src="app.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -1,49 +1,78 @@
-# NPOC Operations Hub — V1.1 Backend Ready
+# NPOC Operations Hub V2.0 Enterprise Frontend
 
-This release keeps the V1.0.3 front-end experience and adds the production-oriented Google Apps Script backend engine.
+This is the upgraded front-end for the NPOC Operations Hub. It is built with plain HTML, vanilla CSS, and vanilla JavaScript, and is designed to connect to the Google Apps Script backend generated for Phase 2.
 
-## What is new in V1.1
+## What is included
 
-- Backend sheet schema for all NPOC operations.
-- Google Apps Script API in `/backend/Code.gs`.
-- API contract and setup guide in `/backend`.
-- Session tracking and audit log backend.
-- Role validation for Super Admin, Lead Admin, Assistant Lead, Class Admin, and Ordinary Admin.
-- Call list import, duplicate prevention, and fair admin distribution backend functions.
-- QR attendance backend validation with cleaned `234...` phone number.
-- Module 1 / Module 2 tracking.
-- Admin Sunday attendance.
-- Admin task schedule and evaluation.
-- Faculty schedule backend endpoint.
-- First-timer and second-timer email queue with Gmail sending.
-- Graduation eligibility and approval backend.
-- Monthly report endpoint.
+- HOTR/RFS branded login splash page
+- Role-based navigation
+- Executive dashboard
+- Call list import from CSV/XLS/XLSX
+- Automatic phone cleanup to `234...`
+- Round-robin call distribution among active admins
+- My Calling List and status updates
+- QR/manual attendance recording for Module 1 and Module 2
+- Physical/Online attendance modes
+- Student progression and graduation eligibility
+- Admin task schedule and evaluation
+- Faculty schedule
+- Email automation view
+- Admin Sunday attendance check-in
+- Monthly report builder with charts
+- Admin center for changing admins, roles, and status
+- Audit and session history
+- Settings page for Apps Script backend URL, API key, and Google Sheet ID
 
-## How to run front-end
+## Deployment on GitHub Pages
 
-Open `index.html` locally or deploy the folder contents to GitHub Pages/Netlify.
+1. Unzip this folder.
+2. Upload the contents to your GitHub repository root.
+3. Ensure the following files are at the root level:
+   - `index.html`
+   - `assets/css/styles.css`
+   - `assets/js/app.js`
+   - `assets/js/api.js`
+   - `assets/js/charts.js`
+   - `assets/branding/hotr-logo.png`
+4. In GitHub, go to **Settings → Pages**.
+5. Select the branch and root folder.
+6. Save and wait for the Pages URL to go live.
 
-## How to connect backend
+## Connecting to Google Apps Script
 
-1. Create a new Google Sheet.
-2. Open Extensions → Apps Script.
-3. Paste `/backend/Code.gs`.
-4. Add Script Properties:
-   - `API_KEY`
-   - `DEMO_ACCESS_CODE`
-   - `FROM_NAME`
-5. Run `setup()` once.
-6. Deploy as a Web App.
-7. Copy the Web App URL.
-8. Open `backend-client.js` and set:
+1. Deploy the Apps Script backend as a Web App.
+2. Open the frontend.
+3. Login.
+4. Go to **Settings**.
+5. Paste:
+   - Apps Script Web App URL
+   - API Key
+   - Google Sheet ID
+6. Change mode from `local` to `backend`.
+7. Save settings.
 
-```js
-BACKEND_URL: 'YOUR_APPS_SCRIPT_WEB_APP_URL',
-API_KEY: 'YOUR_API_KEY'
-```
+If backend calls fail, the app gracefully falls back to local browser storage so you can still demo it.
 
-## Production note
+## Recommended backend package
 
-For leadership demo, this is strong. For live production, use Google Workspace access restrictions and keep the API key private.
+Use the Phase 2 Apps Script backend package previously generated:
 
-Footer text remains: Rock Foundation School · NPOC Operations Hub
+- `Code.gs`
+- `Database.gs`
+- `Email.gs`
+- `SMS.gs`
+- `Tasks.gs`
+- `Attendance.gs`
+- `Integrations.gs`
+- `Utilities.gs`
+- `Triggers.gs`
+
+## Important notes
+
+- For Excel import, this frontend uses SheetJS from CDN. If offline, convert the church list to CSV before upload.
+- For production security, replace the demo access code with Google Session verification and Apps Script role validation.
+- Keep `assets/branding/hotr-logo.png` in the exact folder to avoid GitHub Pages image path issues.
+
+Footer text remains intentionally simple:
+
+`Rock Foundation School · NPOC Operations Hub`
