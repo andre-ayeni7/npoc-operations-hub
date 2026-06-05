@@ -57,11 +57,11 @@ const App = (() => {
     const map = {dashboard:renderDashboard,'call-import':renderCallImport,'my-calls':renderMyCalls,attendance:renderAttendance,students:renderStudents,tasks:renderTasks,faculty:renderFaculty,email:renderEmail,'admin-attendance':renderAdminAttendance,reports:renderReports,'admin-center':renderAdminCenter,audit:renderAudit,settings:renderSettings};
     await (map[view] || renderDashboard)();
   }
-  function kpi(label,value,note){return `<article class="card kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-note">${note}</div></article>`}
+  function kpi(label,value,note){ const icons={ 'HOTR Parishioners':'👥','Expected Students':'🎯','Actual Attendance':'✅','First Timers':'✨','Average Attendance':'📊','Graduates':'🎓','Calls Completed':'☎️','Interested / Registered':'🤝' }; return `<article class="card kpi-card"><div class="kpi-icon">${icons[label]||'•'}</div><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-note">${note}</div></article>`}
   async function renderDashboard(){
     const data = await NPOC_API.api('GET_DASHBOARD',{user}); const d = data.dashboard;
     $('#view-dashboard').innerHTML = `
-      <div class="hero"><div><div class="eyebrow">Executive control center</div><h1>Continuous NPOC operations from call list to graduation.</h1><p>Track parishioners, call assignments, QR attendance, module progress, graduates, admin Sunday attendance, and monthly report KPIs in one workspace.</p><div class="hero-actions"><button class="btn btn-primary" data-go="call-import">Import call list</button><button class="btn btn-soft" data-go="attendance">Record QR attendance</button><button class="btn btn-ghost" data-go="reports">View reports</button></div></div><div class="hero-panel"><span>May attendance rate</span><strong>${d.mayAttendanceRate}%</strong><small>Expected ${d.kpis.expected} / Actual ${d.kpis.actual}</small></div></div>
+      <div class="hero compact-hero"><div><div class="eyebrow">Executive overview</div><h1>NPOC Operations Hub</h1><p>Import call lists, distribute admin calls, record attendance, track student progress, and generate monthly reports from one clean workspace.</p><div class="hero-actions"><button class="btn btn-primary" data-go="call-import">Import call list</button><button class="btn btn-soft" data-go="attendance">Record QR attendance</button><button class="btn btn-ghost" data-go="reports">View reports</button></div></div><div class="hero-panel"><span>May attendance rate</span><strong>${d.mayAttendanceRate}%</strong><small>Expected ${d.kpis.expected} / Actual ${d.kpis.actual}</small></div></div>
       <div class="grid kpi">${kpi('HOTR Parishioners',d.kpis.parishioners,'Cleaned call list count')}${kpi('Expected Students',d.kpis.expected,'May 2026 target')}${kpi('Actual Attendance',d.kpis.actual,'Student total')}${kpi('First Timers',d.kpis.firstTimers,'New attendees')}${kpi('Average Attendance',d.kpis.avgAttendance,'Across classes')}${kpi('Graduates',d.kpis.graduates,'May graduates')}${kpi('Calls Completed',d.kpis.callsCompleted,`${d.kpis.callsCompleted ? 'Updated call outcomes' : 'No backend calls yet'}`)}${kpi('Interested / Registered',`${d.kpis.interested}/${d.kpis.registered}`,'Call outcome')}</div>
       <div class="grid two" style="margin-top:18px"><div class="card"><div class="card-title"><h3>Expected vs Actual</h3><span>Monthly report</span></div><div id="expectedChart" class="chart-box"></div></div><div class="card"><div class="card-title"><h3>Pipeline</h3><span>Students by stage</span></div><div class="progress-list">${Object.entries(d.studentsPipeline).map(([name,val])=>`<div class="progress-row"><strong>${labelize(name)}</strong><div class="bar"><span style="--w:${Math.min(100,val*7)}%"></span></div><b>${val}</b></div>`).join('')}</div></div></div>
       <div class="grid two" style="margin-top:18px"><div class="card"><div class="card-title"><h3>Action queue</h3><span>Open tasks</span></div>${renderMobileTable(d.actionQueue.map(t=>({title:t.taskName||t.task, meta:`${t.adminName||t.assignedAdmin} · ${t.priority}`, badge:t.status||'Pending'})))}<div class="table-wrap"><table class="data-table"><thead><tr><th>Task</th><th>Admin</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead><tbody>${d.actionQueue.map(t=>`<tr><td>${t.taskName||t.task}</td><td>${t.adminName||t.assignedAdmin}</td><td>${t.dueDate||''}</td><td>${t.priority}</td><td>${badge(t.status||'Pending')}</td></tr>`).join('')||'<tr><td colspan="5">No open tasks</td></tr>'}</tbody></table></div></div><div class="card"><div class="card-title"><h3>Recent activity</h3><span>Audit log</span></div><div class="audit-feed">${d.recentAudit.length?d.recentAudit.map(a=>auditItem(a)).join(''):'<div class="empty-state">No recent activity yet.</div>'}</div></div></div>`;
@@ -74,22 +74,95 @@ const App = (() => {
   function auditItem(a){ return `<div class="audit-item"><span class="audit-dot"></span><div><strong>${a.action}</strong><div class="call-meta"><span>${a.adminName||a.adminEmail}</span><span>${new Date(a.timestamp).toLocaleString()}</span></div><small>${a.entity} ${a.details||''}</small></div></div>` }
   async function renderCallImport(){
     const admins=(await NPOC_API.api('GET_ADMINS',{user})).admins;
-    $('#view-call-import').innerHTML=`<div class="card"><div class="card-title"><h3>Import church office call list</h3><span>CSV/XLSX supported</span></div><p class="section-subtitle">Upload the file exactly as received. The system will detect common Name, Phone and Email columns, clean phone numbers into 234 format, remove duplicates, and distribute evenly among active admins.</p><div class="toolbar"><div class="field grow"><label>Call list file</label><input id="callFile" type="file" accept=".csv,.xlsx,.xls" /></div><button id="processCallFile" class="btn btn-primary">Import and distribute</button></div><div class="empty-state">Active admins: ${admins.map(a=>a.name).join(', ')}</div></div><div id="importResult" style="margin-top:18px"></div>`;
+    $('#view-call-import').innerHTML=`<div class="card import-card"><div class="card-title"><h3>Import church office call list</h3><span>Excel / CSV ready</span></div><p class="section-subtitle">Upload the list exactly as received from the church office. The importer scans all sheets, finds the real contact table, cleans Nigerian phone numbers into 234 format, removes duplicates, and distributes calls evenly across active admins.</p><div class="toolbar import-toolbar"><div class="field grow"><label>Church office file</label><input id="callFile" type="file" accept=".csv,.xlsx,.xls" /></div><button id="processCallFile" class="btn btn-primary">Import and distribute</button></div><div id="importStatus" class="import-status">Active admins: ${admins.map(a=>a.name).join(', ')}</div></div><div id="importResult" style="margin-top:18px"></div>`;
     $('#processCallFile').onclick = importFile;
   }
-  function parseCsv(text){ const lines=text.split(/\r?\n/).filter(Boolean); const headers=lines.shift().split(',').map(h=>h.trim()); return lines.map(line=>{ const parts=line.split(','); const obj={}; headers.forEach((h,i)=>obj[h]=parts[i]?.trim()||''); return obj;}); }
-  function normalizeRows(rows){
-    return rows.map(r=>{ const keys=Object.keys(r); const find=(words)=>keys.find(k=>words.some(w=>k.toLowerCase().includes(w))); return {name:r[find(['name','full'])]||'', phone:r[find(['phone','mobile','telephone'])]||'', email:r[find(['email','mail'])]||''}; }).filter(r=>r.phone);
+  function cleanPhoneLoose(value){
+    const raw=String(value||'').trim(); if(!raw) return '';
+    let digits=raw.replace(/\D/g,'');
+    if(digits.length<10) return '';
+    if(digits.startsWith('0') && digits.length>=11) return '234'+digits.slice(-10);
+    if(digits.startsWith('234') && digits.length>=13) return '234'+digits.slice(-10);
+    if(digits.length===10) return '234'+digits;
+    if(digits.length>10) return '234'+digits.slice(-10);
+    return '';
+  }
+  function looksLikeEmail(v){ return /@/.test(String(v||'')); }
+  function parseCsvMatrix(text){
+    const rows=[]; let row=[], cell='', q=false;
+    for(let i=0;i<text.length;i++){
+      const ch=text[i], nx=text[i+1];
+      if(ch==='"' && q && nx==='"'){ cell+='"'; i++; }
+      else if(ch==='"'){ q=!q; }
+      else if(ch===',' && !q){ row.push(cell.trim()); cell=''; }
+      else if((ch==='\n'||ch==='\r') && !q){ if(ch==='\r'&&nx==='\n') i++; row.push(cell.trim()); if(row.some(Boolean)) rows.push(row); row=[]; cell=''; }
+      else cell+=ch;
+    }
+    row.push(cell.trim()); if(row.some(Boolean)) rows.push(row);
+    return rows;
+  }
+  function contactsFromMatrix(matrix){
+    const rows=(matrix||[]).filter(r=>r && r.some(c=>String(c||'').trim()!==''));
+    if(!rows.length) return [];
+    let best={score:-1,idx:0,cols:{}};
+    rows.slice(0,25).forEach((r,idx)=>{
+      const lower=r.map(c=>String(c||'').toLowerCase().trim());
+      const cols={
+        name: lower.findIndex(h=>/(^|\s)(name|full name|fullname|first name|surname|parishioner)/i.test(h)),
+        phone: lower.findIndex(h=>/(phone|mobile|telephone|whatsapp|contact|number)/i.test(h)),
+        email: lower.findIndex(h=>/(email|e-mail|mail)/i.test(h))
+      };
+      const phoneLike=r.findIndex(c=>cleanPhoneLoose(c)); if(cols.phone<0 && phoneLike>=0) cols.phone=phoneLike;
+      const score=(cols.phone>=0?5:0)+(cols.name>=0?3:0)+(cols.email>=0?1:0)+r.filter(Boolean).length/20;
+      if(score>best.score) best={score,idx,cols};
+    });
+    const start=best.score>=5?best.idx+1:0;
+    const sampleRows=rows.slice(start);
+    if(best.cols.phone<0){
+      let counts={}; sampleRows.slice(0,30).forEach(r=>r.forEach((c,i)=>{ if(cleanPhoneLoose(c)) counts[i]=(counts[i]||0)+1; }));
+      best.cols.phone=Number(Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] ?? -1);
+    }
+    if(best.cols.name<0){ best.cols.name=0; if(best.cols.name===best.cols.phone) best.cols.name=1; }
+    if(best.cols.email<0){
+      let counts={}; sampleRows.slice(0,30).forEach(r=>r.forEach((c,i)=>{ if(looksLikeEmail(c)) counts[i]=(counts[i]||0)+1; }));
+      best.cols.email=Number(Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] ?? -1);
+    }
+    const contacts=[];
+    sampleRows.forEach(r=>{
+      const phone=cleanPhoneLoose(r[best.cols.phone]);
+      if(!phone) return;
+      const name=String(r[best.cols.name]||'').trim() || 'Unnamed';
+      const email=best.cols.email>=0?String(r[best.cols.email]||'').trim():'';
+      contacts.push({name, phone, email});
+    });
+    const unique=[]; const seen=new Set();
+    contacts.forEach(c=>{ if(!seen.has(c.phone)){ seen.add(c.phone); unique.push(c); } });
+    return unique;
   }
   async function importFile(){
     const file=$('#callFile').files[0]; if(!file){toast('Select a file first.');return}
-    let rows=[];
-    if(file.name.endsWith('.csv')) rows=normalizeRows(parseCsv(await file.text()));
-    else if(window.XLSX){ const buf=await file.arrayBuffer(); const wb=XLSX.read(buf); const sheet=wb.Sheets[wb.SheetNames.find(n=>/call|first|guess|list/i.test(n))||wb.SheetNames[0]]; rows=normalizeRows(XLSX.utils.sheet_to_json(sheet,{defval:''})); }
-    else { toast('XLSX parser not loaded. Convert file to CSV or enable internet for SheetJS CDN.'); return; }
-    const res=await NPOC_API.api('IMPORT_CALL_LIST',{method:'POST',body:{fileName:file.name,contacts:rows},user});
-    $('#importResult').innerHTML=`<div class="grid three"><div class="card">${kpi('Imported',res.imported,'New contacts')}</div><div class="card">${kpi('Duplicates',res.duplicatesSkipped,'Skipped safely')}</div><div class="card">${kpi('Admins',res.distributedTo,'Received calls')}</div></div>`;
-    toast('Call list imported and distributed.');
+    const status=$('#importStatus'); const btn=$('#processCallFile');
+    status.innerHTML='<span class="spinner"></span> Reading file and detecting contact table...'; btn.disabled=true; btn.textContent='Processing...';
+    try{
+      let rows=[];
+      if(file.name.toLowerCase().endsWith('.csv')) rows=contactsFromMatrix(parseCsvMatrix(await file.text()));
+      else if(window.XLSX){
+        const buf=await file.arrayBuffer(); const wb=XLSX.read(buf,{cellDates:false});
+        const candidates=wb.SheetNames.map(name=>{
+          const matrix=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',blankrows:false});
+          const contacts=contactsFromMatrix(matrix);
+          return {name,contacts,count:contacts.length};
+        }).sort((a,b)=>b.count-a.count);
+        rows=candidates[0]?.contacts||[];
+        status.innerHTML=`Detected sheet: <b>${candidates[0]?.name||'N/A'}</b> · ${rows.length} contacts found.`;
+      } else { toast('XLSX parser not loaded. Convert file to CSV or enable internet for SheetJS CDN.'); return; }
+      if(!rows.length){ status.textContent='No valid phone-number contacts found. Check the file columns and try again.'; toast('No contacts found in file.'); return; }
+      const res=await NPOC_API.api('IMPORT_CALL_LIST',{method:'POST',body:{fileName:file.name,contacts:rows},user});
+      $('#importResult').innerHTML=`<div class="grid three import-results"><div class="card kpi-card"><div class="kpi-icon">📥</div><div class="kpi-label">Imported</div><div class="kpi-value">${res.imported}</div><div class="kpi-note">New contacts</div></div><div class="card kpi-card"><div class="kpi-icon">🧹</div><div class="kpi-label">Duplicates</div><div class="kpi-value">${res.duplicatesSkipped}</div><div class="kpi-note">Skipped safely</div></div><div class="card kpi-card"><div class="kpi-icon">👤</div><div class="kpi-label">Admins</div><div class="kpi-value">${res.distributedTo}</div><div class="kpi-note">Received calls</div></div></div>`;
+      status.textContent=`Import complete. ${res.imported} new contacts distributed. ${res.duplicatesSkipped} duplicates skipped.`;
+      toast('Call list imported and distributed.');
+    }catch(err){ console.error(err); status.textContent='Import failed. See console for details.'; toast('Import failed. Please try another file.'); }
+    finally{ btn.disabled=false; btn.textContent='Import and distribute'; }
   }
   async function renderMyCalls(){
     const admins=(await NPOC_API.api('GET_ADMINS',{user})).admins; const selected=user.role==='Ordinary Admin'?user.displayName:'all';

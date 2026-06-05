@@ -76,3 +76,11 @@ Use the Phase 2 Apps Script backend package previously generated:
 Footer text remains intentionally simple:
 
 `Rock Foundation School · NPOC Operations Hub`
+
+
+## V2.0.1 UX Patch
+- Reworked mobile header so month selector and report button stack correctly.
+- Shortened dashboard hero copy for cleaner executive presentation.
+- Improved sidebar scrolling and motion.
+- Improved call-list upload: scans all workbook sheets, detects the true contact table, cleans phone numbers, and shows processing status.
+- Added KPI icons and lighter card animations.
