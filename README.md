@@ -84,3 +84,12 @@ Footer text remains intentionally simple:
 - Improved sidebar scrolling and motion.
 - Improved call-list upload: scans all workbook sheets, detects the true contact table, cleans phone numbers, and shows processing status.
 - Added KPI icons and lighter card animations.
+
+## V2.1.1 Continuity Fix
+This build restores and strengthens the tabs that must remain part of the NPOC Operations Hub:
+- Admin Center
+- Email Automation
+- My Calling List editable status/notes/timestamps
+- Faculty Schedule upcoming list
+
+This is an enhancement over V2.1, not a reset of the platform.

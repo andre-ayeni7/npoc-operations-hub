@@ -21,3 +21,15 @@
 @media(max-width:1180px){.topbar-actions{width:auto;margin-left:auto}.topbar{align-items:flex-start}.hero-actions .btn{width:auto}.grid.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:840px){:root{--chart-h:190px}.topbar{display:grid;grid-template-columns:52px minmax(0,1fr);padding:14px 16px 16px;gap:12px;align-items:center}.topbar .icon-btn{grid-column:1;grid-row:1}.topbar>div:not(.topbar-actions){grid-column:2;grid-row:1}.topbar>div:not(.topbar-actions) span{font-size:12px}.topbar h2{font-size:24px;line-height:1.05}.topbar-actions{grid-column:1/-1;display:grid!important;grid-template-columns:1fr 1fr;width:100%;gap:10px;margin-left:0}.topbar select,.topbar .btn{width:100%;min-width:0}.hero.compact-hero{grid-template-columns:1fr;padding:22px}.compact-hero h1{font-size:30px;line-height:1.04}.compact-hero p{font-size:15px;line-height:1.55}.compact-hero .hero-panel{min-height:auto;padding:18px}.compact-hero .hero-panel strong{font-size:42px}.hero-actions{display:grid;grid-template-columns:1fr;gap:10px}.hero-actions .btn{width:100%}.grid.kpi{grid-template-columns:1fr}.kpi-card{min-height:150px}.kpi-value{font-size:38px}.chart-box{height:190px;max-height:190px}.sidebar{height:100dvh;max-height:100dvh;padding:18px;overflow-y:auto;overscroll-behavior:contain}.main-nav{padding-bottom:8px}.view{padding:14px}.card:hover{transform:none}.toolbar.import-toolbar{display:grid;grid-template-columns:1fr}.toolbar.import-toolbar .btn{width:100%}.card-title{gap:6px}}
 @media(max-width:520px){body{font-size:15px}.topbar{padding:12px}.topbar h2{font-size:21px}.topbar-actions{grid-template-columns:1fr}.topbar select{height:54px;font-size:18px}.topbar .btn{height:54px}.view{padding:12px}.hero.compact-hero{padding:20px;border-radius:24px}.compact-hero h1{font-size:27px}.compact-hero p{font-size:14.5px}.card{padding:15px;border-radius:20px}.kpi-icon{width:38px;height:38px}.kpi-value{font-size:34px}.chart-box{height:175px;max-height:175px}.progress-row{grid-template-columns:78px 1fr 36px;font-size:12px}.login-card{width:100%;max-height:calc(100dvh - 28px);overflow:auto}.login-brand{align-items:flex-start}.login-card h1{font-size:28px}.login-card p{font-size:14px}.footer{font-size:12px}.import-status{text-align:left}}
+
+/* V2.1.1 continuity fixes */
+.editable-calls select,.editable-calls textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;font:inherit;color:var(--ink)}
+.editable-calls textarea{min-width:220px;resize:vertical}
+.mobile-cards .badge{white-space:nowrap}
+#view-email textarea,#view-faculty textarea{min-height:120px;resize:vertical}
+@media(max-width:760px){
+  .editable-calls textarea{min-width:0}
+  .toolbar{gap:12px}
+  .toolbar .field,.toolbar .btn{width:100%}
+  .card-title{align-items:flex-start;gap:6px}
+}
