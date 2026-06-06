@@ -1,20 +1,22 @@
 const NPOC_API = (() => {
   const STORE_KEY = 'npoc-v2-state';
   const SETTINGS_KEY = 'npoc-v2-settings';
+  const DEFAULT_CONFIG = window.NPOC_CONFIG || {};
+  let activeMonth = 'May2026';
 
   const seed = {
     kpis: { parishioners: 340, expected: 120, actual: 48, firstTimers: 30, avgAttendance: 10, graduates: 12, attendanceRate: 40 },
     admins: [
-      {adminID:'A001', name:'Andrew', email:'andrew@rfs.org', role:'Lead Admin', status:'Active', department:'NPOC'},
-      {adminID:'A002', name:'Teece', email:'teece@rfs.org', role:'Assistant Lead Admin', status:'Active', department:'NPOC'},
-      {adminID:'A003', name:'Ebi', email:'ebi@rfs.org', role:'Class Admin', status:'Active', department:'NPOC'},
-      {adminID:'A004', name:'Emmanuel', email:'emmanuel@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'},
-      {adminID:'A005', name:'Tomi', email:'tomi@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'},
-      {adminID:'A006', name:'Gold', email:'gold@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'},
-      {adminID:'A007', name:'Chinonso', email:'chinonso@rfs.org', role:'Class Admin', status:'Active', department:'NPOC'},
-      {adminID:'A008', name:'Success', email:'success@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'},
-      {adminID:'A009', name:'Chinyere', email:'chinyere@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'},
-      {adminID:'A010', name:'Chinemeazu', email:'chinemeazu@rfs.org', role:'Ordinary Admin', status:'Active', department:'NPOC'}
+      {adminID:'A001', name:'Andrew', email:'andrew@rfs.org', role:'Lead Admin', status:'Active', department:'Lead Administration'},
+      {adminID:'A002', name:'Teece', email:'teece@rfs.org', role:'Lead Admin', status:'Active', department:'Lead Administration'},
+      {adminID:'A003', name:'Ebi', email:'ebi@rfs.org', role:'Class Admin', status:'Active', department:'Class Supervision'},
+      {adminID:'A004', name:'Emmanuel', email:'emmanuel@rfs.org', role:'Class Admin', status:'Active', department:'Class Supervision'},
+      {adminID:'A005', name:'Tomi', email:'tomi@rfs.org', role:'Ordinary Admin', status:'Active', department:'Database Team'},
+      {adminID:'A006', name:'Gold', email:'gold@rfs.org', role:'Ordinary Admin', status:'Active', department:'Database Team'},
+      {adminID:'A007', name:'Chinonso', email:'chinonso@rfs.org', role:'Class Admin', status:'Active', department:'Class Supervision'},
+      {adminID:'A008', name:'Success', email:'success@rfs.org', role:'Ordinary Admin', status:'Active', department:'Database Team'},
+      {adminID:'A009', name:'Chinyere', email:'chinyere@rfs.org', role:'Ordinary Admin', status:'Active', department:'Database Team'},
+      {adminID:'A010', name:'Chinemeazu', email:'chinemeazu@rfs.org', role:'Class Admin', status:'Active', department:'Class Supervision'}
     ],
     calls: [],
     attendance: [
@@ -41,9 +43,38 @@ const NPOC_API = (() => {
   };
 
   function getSettings(){
-    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || JSON.stringify({backendUrl:'', apiKey:'', sheetId:'', allowedDomain:'rfs.org', mode:'local'}));
+    const fallback = {
+      backendUrl: DEFAULT_CONFIG.backendUrl || '',
+      apiKey: DEFAULT_CONFIG.apiKey || '',
+      sheetId: DEFAULT_CONFIG.sheetId || '',
+      allowedDomain: DEFAULT_CONFIG.allowedDomain || 'rfs.org',
+      mode: DEFAULT_CONFIG.mode || 'local'
+    };
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return fallback;
+    try { return Object.assign({}, fallback, JSON.parse(raw)); }
+    catch(e){ return fallback; }
   }
   function saveSettings(settings){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+  async function syncSettings(settings, user){
+    saveSettings(settings);
+    if (settings.mode === 'backend' && settings.backendUrl && settings.apiKey) {
+      const result = await remote('SAVE_SETTINGS', 'POST', { settings, currentUser: user || null }, {}, settings).catch(err => ({success:false, error:err.message}));
+      return result || {success:true, localOnly:true};
+    }
+    return {success:true, localOnly:true};
+  }
+  async function loadSharedSettings(){
+    const settings = getSettings();
+    if (settings.mode !== 'backend' || !settings.backendUrl || !settings.apiKey) return settings;
+    const result = await remote('GET_SETTINGS', 'GET', null, {}, settings).catch(()=>null);
+    if (result && result.settings) {
+      const merged = Object.assign({}, settings, result.settings, { backendUrl: settings.backendUrl, apiKey: settings.apiKey, mode: settings.mode });
+      saveSettings(merged);
+      return merged;
+    }
+    return settings;
+  }
   function getState(){
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw){ localStorage.setItem(STORE_KEY, JSON.stringify(seed)); return structuredClone(seed); }
@@ -66,21 +97,22 @@ const NPOC_API = (() => {
     state.audit = state.audit.slice(0, 500);
     saveState(state);
   }
-  async function remote(action, method='GET', body=null, params={}){
-    const settings = getSettings();
+  async function remote(action, method='GET', body=null, params={}, overrideSettings=null){
+    const settings = overrideSettings || getSettings();
     if (!settings.backendUrl || settings.mode === 'local') return null;
     const url = new URL(settings.backendUrl);
     url.searchParams.set('action', action);
     if (settings.apiKey) url.searchParams.set('api_key', settings.apiKey);
     Object.entries(params || {}).forEach(([k,v]) => url.searchParams.set(k,v));
     const options = {method, headers:{'Content-Type':'text/plain;charset=utf-8'}};
-    if (body) options.body = JSON.stringify(body);
+    if (body) options.body = JSON.stringify(Object.assign({}, body, { currentUser: body.currentUser || (params.currentUser || null) }));
     const res = await fetch(url.toString(), options);
     const data = await res.json();
     if (!data.success && data.error) throw new Error(data.error);
     return data;
   }
   async function api(action, {method='GET', body=null, params={}, user=null}={}){
+    if (user) { params = Object.assign({}, params, { user_email: user.email }); body = body ? Object.assign({}, body, { currentUser: user }) : body; }
     const remoteResult = await remote(action, method, body, params).catch(err => {
       console.warn('Backend fallback:', err.message);
       return null;
@@ -88,7 +120,9 @@ const NPOC_API = (() => {
     if (remoteResult) return remoteResult;
     const state = getState();
     switch(action){
-      case 'GET_DASHBOARD': return {success:true, dashboard: buildDashboard(state)};
+      case 'GET_DASHBOARD': activeMonth = params.month || activeMonth; return {success:true, dashboard: buildDashboard(state, activeMonth)};
+      case 'GET_SETTINGS': return {success:true, settings:getSettings()};
+      case 'SAVE_SETTINGS': saveSettings(body.settings || body); return {success:true};
       case 'IMPORT_CALL_LIST': return importCallList(state, body, user);
       case 'GET_ADMIN_CALLS': return {success:true, calls: state.calls.filter(c => (params.admin === 'all' || !params.admin || c.adminName === params.admin) && (params.status === 'all' || !params.status || c.status === params.status))};
       case 'UPDATE_CALL_STATUS': return updateCallStatus(state, body, user);
@@ -104,7 +138,7 @@ const NPOC_API = (() => {
       case 'GET_EMAIL_QUEUE': return {success:true, queue: state.emailQueue};
       case 'ADMIN_CHECK_IN': return adminCheckIn(state, body, user);
       case 'GET_ADMIN_ATTENDANCE_TREND': return {success:true, trend: state.adminAttendance};
-      case 'GET_MONTHLY_REPORT': return {success:true, report: buildReport(state)};
+      case 'GET_MONTHLY_REPORT': return {success:true, report: buildReport(state, params.month || activeMonth)};
       case 'GET_ADMINS': return {success:true, admins: state.admins};
       case 'CREATE_ADMIN': return createAdmin(state, body, user);
       case 'UPDATE_ADMIN': return updateAdmin(state, body, user);
@@ -112,15 +146,29 @@ const NPOC_API = (() => {
       default: return {success:false, error:`Unknown local action: ${action}`};
     }
   }
-  function buildDashboard(state){
-    const expected = state.kpis.expected || 120;
-    const actual = state.attendance.length > 2 ? state.attendance.length : state.kpis.actual;
+  function monthLabel(monthKey){ return String(monthKey||'May2026').replace(/(\D+)(\d{4})/,'$1 $2').trim(); }
+  function monthNameFromKey(monthKey){ return String(monthKey||'May2026').replace(/\d/g,''); }
+  function isDateInMonth(date, monthKey){
+    if (!date) return false;
+    const d = new Date(date); if (isNaN(d)) return false;
+    const month = monthNameFromKey(monthKey).toLowerCase();
+    return d.toLocaleString('en-US',{month:'long'}).toLowerCase() === month;
+  }
+  function buildDashboard(state, monthKey){
+    const isMay = String(monthKey||'May2026') === 'May2026';
+    const monthAttendance = state.attendance.filter(a => isDateInMonth(a.date, monthKey));
+    const monthTasks = state.tasks.filter(t => isDateInMonth(t.dueDate, monthKey));
+    const expected = isMay ? (state.kpis.expected || 120) : 0;
+    const actual = isMay ? (monthAttendance.length ? monthAttendance.length : state.kpis.actual) : monthAttendance.length;
+    const firstTimers = isMay ? state.kpis.firstTimers : monthAttendance.filter(a=>a.firstAttendance).length;
+    const avgAttendance = expected || actual ? Math.round(actual / Math.max(1, (String(monthKey).startsWith('May') ? 5 : 1))) : 0;
     return {
-      mayAttendanceRate: Math.round((actual / expected) * 100),
-      expectedVsActual:[{month:'May', expected, actual},{month:'June', expected:130, actual:0}],
+      selectedMonth: monthLabel(monthKey),
+      mayAttendanceRate: expected ? Math.round((actual / expected) * 100) : 0,
+      expectedVsActual:[{month: monthLabel(monthKey), expected, actual}],
       studentsPipeline: pipeline(state),
-      actionQueue: state.tasks.filter(t => t.status !== 'Completed').slice(0, 6),
-      kpis:{...state.kpis, actual, attendanceRate: Math.round((actual/expected)*100), callsCompleted: state.calls.filter(c => c.status && c.status !== 'Pending').length, interested: state.calls.filter(c => c.status === 'Called - Interested').length, registered: state.calls.filter(c => c.registered).length},
+      actionQueue: (monthTasks.length ? monthTasks : state.tasks).filter(t => t.status !== 'Completed').slice(0, 6),
+      kpis:{...state.kpis, expected, actual, firstTimers, avgAttendance, attendanceRate: expected ? Math.round((actual/expected)*100) : 0, callsCompleted: state.calls.filter(c => c.status && c.status !== 'Pending').length, interested: state.calls.filter(c => c.status === 'Called - Interested').length, registered: state.calls.filter(c => c.registered).length},
       adminAttendance: state.adminAttendance,
       recentAudit: state.audit.slice(0, 8)
     };
@@ -196,12 +244,14 @@ const NPOC_API = (() => {
   function createFaculty(state, body, user){ const f={scheduleID:id('FAC'),...body}; state.faculty.unshift(f); saveState(state); audit('CREATE_FACULTY_SCHEDULE','FACULTY_SCHEDULE',{id:f.scheduleID},user); return {success:true, scheduleID:f.scheduleID}; }
   function saveEmailTemplate(state, body, user){ const t=state.emailTemplates.find(x=>x.templateID===body.templateID); if(t){t.subject=body.subject;t.bodyHTML=body.bodyHTML}else state.emailTemplates.push({...body, templateName:body.templateID,status:'Active'}); saveState(state); audit('SAVE_EMAIL_TEMPLATE','EMAIL_TEMPLATES',{id:body.templateID},user); return {success:true}; }
   function adminCheckIn(state, body, user){ const rec={checkedInID:id('CHK'), ...body, checkedByAdmin:body.checkedInByAdmin || user?.displayName || '', timeCheckedIn:new Date().toLocaleTimeString()}; state.adminAttendance.unshift(rec); saveState(state); audit('ADMIN_CHECK_IN','ADMIN_ATTENDANCE',{id:rec.checkedInID},user); return {success:true, checkedInID:rec.checkedInID}; }
-  function buildReport(state){
+  function buildReport(state, monthKey){
+    const isMay = String(monthKey||'May2026') === 'May2026';
+    if (!isMay) return {expectedStudents:0, actualAttendance:0, firstTimers:0, graduates:0, adminAttendance: state.admins.map(a=>({adminName:a.name, attendance:0})), firstClassChart:[], secondClassChart:[]};
     return {expectedStudents:120, actualAttendance: state.kpis.actual, firstTimers:state.kpis.firstTimers, graduates:state.kpis.graduates, adminAttendance: state.admins.map(a => ({adminName:a.name, attendance:state.adminAttendance.filter(x=>x.adminName===a.name).length})), firstClassChart:[{week:'May 3',expected:13,actual:8},{week:'May 10',expected:19,actual:6},{week:'May 17',expected:19,actual:6},{week:'May 24',expected:13,actual:1},{week:'May 31',expected:16,actual:8}], secondClassChart:[{week:'May 3',expected:7,actual:1},{week:'May 10',expected:8,actual:5},{week:'May 17',expected:6,actual:4},{week:'May 24',expected:18,actual:8},{week:'May 31',expected:7,actual:2}]};
   }
   function createAdmin(state, body, user){ const admin={adminID:id('A'),...body}; state.admins.push(admin); saveState(state); audit('CREATE_ADMIN','ADMINS',{id:admin.adminID},user); return {success:true, adminID:admin.adminID}; }
   function updateAdmin(state, body, user){ const admin=state.admins.find(a=>a.adminID===body.adminID); if(!admin) return {success:false,error:'Admin not found'}; Object.assign(admin, body); saveState(state); audit('UPDATE_ADMIN','ADMINS',{id:admin.adminID},user); return {success:true}; }
   function createSession(user){ const state=getState(); const session={sessionID:id('SES'), admin:user.displayName, email:user.email, role:user.role, loginTime:now(), logoutTime:'', ipAddress:'Browser'}; state.sessions.unshift(session); saveState(state); return session.sessionID; }
   function closeSession(sessionID){ const state=getState(); const s=state.sessions.find(x=>x.sessionID===sessionID); if(s) s.logoutTime=now(); saveState(state); }
-  return {api, getState, saveState, getSettings, saveSettings, cleanPhone, audit, createSession, closeSession};
+  return {api, getState, saveState, getSettings, saveSettings, syncSettings, loadSharedSettings, cleanPhone, audit, createSession, closeSession};
 })();
