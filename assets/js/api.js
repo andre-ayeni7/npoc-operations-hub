@@ -82,10 +82,15 @@ const NPOC_API = (() => {
   }
   function saveState(state){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   function cleanPhone(phone){
+    // Single source of truth: use PhoneUtils when available.
+    // Fallback keeps the app working if the utility file is missing.
+    if (window.PhoneUtils && typeof PhoneUtils.normalize === 'function') {
+      return PhoneUtils.normalize(phone);
+    }
     const raw = String(phone || '').replace(/[^0-9]/g,'');
     if (!raw) return '';
-    if (raw.startsWith('234')) return raw;
-    if (raw.startsWith('0')) return `234${raw.slice(-10)}`;
+    if (/^234\d{10}$/.test(raw)) return raw;
+    if (raw.startsWith('0') && raw.length >= 11) return `234${raw.slice(-10)}`;
     if (raw.length === 10) return `234${raw}`;
     return raw.length > 10 ? `234${raw.slice(-10)}` : `234${raw}`;
   }

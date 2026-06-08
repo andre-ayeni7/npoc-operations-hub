@@ -93,3 +93,17 @@ This build restores and strengthens the tabs that must remain part of the NPOC O
 - Faculty Schedule upcoming list
 
 This is an enhancement over V2.1, not a reset of the platform.
+
+
+## V2.1.2 Claude AI Enhancement Integration
+
+This build keeps the V2.1.1 continuity structure intact and integrates the safe parts of the Claude AI enhancement pack:
+
+- IndexedDB cache (`assets/js/db.js`)
+- Form validation engine (`assets/js/validation.js`)
+- Central phone utilities (`assets/js/phone-utils.js`)
+- Retry/offline API client (`assets/js/api-enhanced.js`)
+- Backend-aware sync manager (`assets/js/sync.js`)
+- Compatibility bridge (`assets/js/enhancement-bridge.js`)
+
+The active UI remains `assets/js/app.js` to avoid scattering the existing tabs and workflows. See `docs/CLAUDE_AI_REVIEW_INTEGRATION_NOTES.md`.
